@@ -1,0 +1,106 @@
+{% load static %}
+
+<!-- shop/templates/shop/product_detail.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ product.name }}</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'shop/styles.css' %}">
+    <script src="https://unpkg.com/boxicons@2.1.4/dist/boxicons.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- jQuery for AJAX -->
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="logo"><a href="{% url 'home' %}">SHOE SHOP</a></div>
+        <ul class="nav-links nav-left">
+            <li><a href="#">BRANDS</a></li>
+            <li><a href="#">CUSTOM</a></li>
+        </ul>
+        <ul class="nav-links nav-right">
+            <li><a href="#">Login</a></li>
+            <li>
+                <a href="{% url 'cart' %}" class="cart-icon">
+                    <box-icon name='cart'></box-icon>
+                    <span class="cart-count" id="cart-count">{{ request.session.cart_count|default:0 }}</span> <!-- Display cart count here -->
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="product-detail-container">
+        <div class="product-images">
+            <div class="main-image">
+                <img src="{{ product.image.url }}" id="mainImage" alt="{{ product.name }}">
+            </div>
+            <div class="thumbnail-container">
+                {% if product.image_1 %}
+                    <img src="{{ product.image_1.url }}" alt="Thumbnail 1" onclick="changeImage('{{ product.image_1.url }}')">
+                {% endif %}
+                {% if product.image_2 %}
+                    <img src="{{ product.image_2.url }}" alt="Thumbnail 2" onclick="changeImage('{{ product.image_2.url }}')">
+                {% endif %}
+                {% if product.image_3 %}
+                    <img src="{{ product.image_3.url }}" alt="Thumbnail 3" onclick="changeImage('{{ product.image_3.url }}')">
+                {% endif %}
+                {% if product.image_4 %}
+                    <img src="{{ product.image_4.url }}" alt="Thumbnail 4" onclick="changeImage('{{ product.image_4.url }}')">
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="product-info">
+            <h1>{{ product.name }}</h1>
+            <p>Price: ${{ product.price }}</p>
+
+            <form id="addToCartForm">
+                {% csrf_token %}
+                <div class="sizes">
+                    <h3>Select Size:</h3>
+                    {% for size in sizes %}
+                        <label>
+                            <input type="checkbox" name="size" value="{{ size }}">{{ size }}
+                        </label>
+                    {% endfor %}
+                </div>
+                <button type="submit">Add to Cart</button>
+            </form>
+        </div>
+    </div>
+    <br><br>
+    <footer>
+        <p>&copy; 2024 Shoe Shop. All rights reserved.</p>
+    </footer>
+
+    <!-- Script to handle the dynamic image change -->
+    <script>
+        function changeImage(imageUrl) {
+            document.getElementById('mainImage').src = imageUrl;
+        }
+
+        // AJAX request to add item to cart
+        $(document).ready(function() {
+            $('#addToCartForm').submit(function(event) {
+                event.preventDefault();  // Prevent the form from submitting the usual way
+
+                // Send the AJAX request
+                $.ajax({
+                    type: 'POST',
+                    url: "{% url 'add_to_cart' product.id %}",  // Ensure this URL is correct
+                    data: $(this).serialize(),  // Serialize the form data (size, csrf token, etc.)
+                    success: function(response) {
+                        // Update the cart count in the icon
+                        $('#cart-count').text(response.cart_count);
+                        alert(response.message);  // Optional success message
+                    },
+                    error: function(xhr, status, error) {
+                        console.log("Error: " + error);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

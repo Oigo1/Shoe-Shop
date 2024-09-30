@@ -1,0 +1,104 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'shop/styles.css' %}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/boxicons@2.1.4/dist/boxicons.js"></script>
+
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="logo"><a href="{% url 'home' %}">SHOE SHOP</a></div>
+        <ul class="nav-links nav-left">
+            <li><a href="#">BRANDS</a></li>
+            <li><a href="#">CUSTOM</a></li>
+        </ul>
+        <ul class="nav-links nav-right">
+            <li><a href="#">Login</a></li>
+            <li>
+                <a href="{% url 'cart' %}" class="cart-icon"><box-icon name='cart'></box-icon>
+                <span class="cart-count" id="cart-count">{{ request.session.cart_count|default:0 }}</span> <!-- Display cart count here -->
+                </a>
+                
+            </li>
+        </ul>
+    </nav>
+    <div class="cart-container">
+        <h1>Your Cart</h1>
+
+        <div class="cart-items">
+            {% for item in cart_items %}
+                <div class="cart-item">
+                    <div class="cart-item-image">
+                        <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
+                    </div>
+                    <div class="cart-item-details">
+                        <h3>{{ item.product.name }}</h3>
+                        <p>Size: {{ item.size }}</p>
+                        <p>Price: ${{ item.total_price }}</p>
+                        <button class="delete-btn" onclick="deleteItem('{{ item.product.id }}')">Delete</button>
+                    </div>
+                    <div class="cart-item-quantity">
+                        <button class="quantity-btn" onclick="updateQuantity('{{ item.product.id }}', 'decrease')">-</button>
+                        <span>{{ item.quantity }}</span>
+                        <button class="quantity-btn" onclick="updateQuantity('{{ item.product.id }}', 'increase')">+</button>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Totals Section -->
+        <div class="cart-summary">
+            <p>Subtotal: $<span id="subtotal">{{ subtotal }}</span></p>
+            <p>Shipping: $<span id="shipping">{{ shipping }}</span></p>
+            <h2>Total: $<span id="total">{{ total }}</span></h2>
+            <button class="checkout-btn">Proceed to Checkout</button>
+        </div>
+    </div>
+
+    <script>
+        // Update quantity function
+        function updateQuantity(productId, action) {
+            $.ajax({
+                url: '{% url "cart_update" %}',  // Adjust the URL as necessary
+                type: 'POST',
+                data: {
+                    'product_id': productId,
+                    'action': action,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    location.reload();  // Reload the page to update the cart
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error updating quantity:', error);
+                }
+            });
+        }
+
+        // Delete item function
+        function deleteItem(productId) {
+            $.ajax({
+                url: '{% url "cart_delete" %}',  // Adjust the URL as necessary
+                type: 'POST',
+                data: {
+                    'product_id': productId,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    location.reload();  // Reload the page to remove the item
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error deleting item:', error);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
